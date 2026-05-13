@@ -79,10 +79,19 @@
  *  __VMS_XOPEN         Supports XOPEN functions
  */
 
-#if (defined (__64BIT__))               /*  EDM 96/05/30                     */
-#    define __IS_64BIT__                /*  May have 64-bit OS/compiler      */
+#if (defined (__64BIT__)                /*  Legacy 64-bit compiler marker    */\
+ ||  defined (_WIN64)                   /*  Windows 64-bit                   */\
+ ||  defined (__LP64__)                 /*  LP64 data model                  */\
+ ||  defined (__LLP64__)                /*  LLP64 data model                 */\
+ ||  defined (__x86_64__)               /*  AMD64/Intel64                    */\
+ ||  defined (__amd64__)                /*  Alternate AMD64 marker           */\
+ ||  defined (__aarch64__)              /*  ARM64                            */\
+ ||  defined (__ppc64__)                /*  PowerPC64                        */\
+ ||  defined (__mips64)                 /*  MIPS64                           */\
+ || (defined (__riscv) && (__riscv_xlen == 64)))
+#    define __IS_64BIT__                /*  64-bit OS/compiler               */
 #else
-#    define __IS_32BIT__                /*  Else assume 32-bit OS/compiler   */
+#    define __IS_32BIT__                /*  32-bit OS/compiler               */
 #endif
 
 #if (defined WIN32 || defined (_WIN32))
@@ -218,6 +227,7 @@
 #include <math.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <stdint.h>
 
 
 /*- System-specific include files -------------------------------------------*/
@@ -312,15 +322,11 @@
 /*- Data types --------------------------------------------------------------*/
 
 typedef int             Bool;           /*  Boolean TRUE/FALSE value         */
-typedef unsigned char   byte;           /*  Single unsigned byte = 8 bits    */
-typedef unsigned short  dbyte;          /*  Double byte = 16 bits            */
-typedef unsigned short  word;           /*  Alternative for double-byte      */
-typedef unsigned long   dword;          /*  Double word >= 32 bits           */
-#if (defined (__IS_32BIT__))
-typedef unsigned long   qbyte;          /*  Quad byte = 32 bits              */
-#else
-typedef unsigned int    qbyte;          /*  Quad byte = 32 bits              */
-#endif
+typedef uint8_t         byte;           /*  Single unsigned byte = 8 bits    */
+typedef uint16_t        dbyte;          /*  Double byte = 16 bits            */
+typedef uint16_t        word;           /*  Alternative for double-byte      */
+typedef uint32_t        dword;          /*  Double word = 32 bits            */
+typedef uint32_t        qbyte;          /*  Quad byte = 32 bits              */
 typedef void (*function) (void);        /*  Address of simple function       */
 #define local static void               /*  Shorthand for local functions    */
 
@@ -332,20 +338,14 @@ typedef struct {                        /*  Memory descriptor                */
 
 /*- Check compiler data type sizes ------------------------------------------*/
 
-#if (UCHAR_MAX != 0xFF)
+#if (UINT8_MAX != 0xFFU)
 #   error "Cannot compile: must change definition of 'byte'."
 #endif
-#if (USHRT_MAX != 0xFFFFU)
+#if (UINT16_MAX != 0xFFFFU)
 #   error "Cannot compile: must change definition of 'dbyte'."
 #endif
-#if (defined (__IS_32BIT__))
-#   if (ULONG_MAX != 0xFFFFFFFFUL)
-#       error "Cannot compile: must change definition of 'qbyte'."
-#   endif
-#else
-#   if (UINT_MAX != 0xFFFFFFFFU)
-#       error "Cannot compile: must change definition of 'qbyte'."
-#   endif
+#if (UINT32_MAX != 0xFFFFFFFFUL)
+#   error "Cannot compile: must change definition of 'qbyte'."
 #endif
 
 
