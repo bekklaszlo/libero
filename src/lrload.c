@@ -217,6 +217,8 @@ MODULE open_dialog_file (void)
 {
     char
         *located;                       /*  Filename on dpath                */
+    TIME_T
+        *now;                           /*  Current time for temp filename   */
 
     /*  Look for dialog file on -dpath or -path unless fully specified       */
     if (strchr (filename, PATHEND))
@@ -241,7 +243,8 @@ MODULE open_dialog_file (void)
     char_nbr    = 0;                    /*  Clear input line                 */
     srcline [0] = 0;
 
-    sprintf (pretty_file, "lr%ld.tmp", TimeNow ());
+    now = TimeNow ();
+    sprintf (pretty_file, "lr%02d%02d%02d.tmp", now-> hh, now-> mm, now-> ss);
     if (OPT_PRETTY.flags & OPT_ON)
         pretty = FileOpen (pretty_file, 'w');
     else
