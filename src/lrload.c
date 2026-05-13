@@ -244,7 +244,7 @@ MODULE open_dialog_file (void)
     srcline [0] = 0;
 
     now = TimeNow ();
-    sprintf (pretty_file, "lr%02d%02d%02d.tmp", now-> hh, now-> mm, now-> ss);
+    sprintf (pretty_file, "lr%02d%02d%02d.tmp", now->hh, now->mm, now->ss);
     if (OPT_PRETTY.flags & OPT_ON)
         pretty = FileOpen (pretty_file, 'w');
     else
