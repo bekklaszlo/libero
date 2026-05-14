@@ -327,8 +327,10 @@ char *OriginalName (lrnode *listhead, char type, char *name)
 
             if (event-> child == NULL)
                 continue;
-            for (module = event-> child-> next; module; module = module-> next)
-                if (type == 'm' && streq (module-> name, name))
+            for (module = event-> child; module; module = module-> next)
+                if (type == 'm'
+                &&  module-> type == 'm'
+                &&  streq (module-> name, name))
                     return (module-> source_name);
           }
       }

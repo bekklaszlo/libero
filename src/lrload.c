@@ -458,7 +458,7 @@ MODULE attach_new_state (void)
 static lrnode *alloc_node (char type, lrnode *parent, lrnode *sibling)
 {
     lrnode *newnode;
-    char canonical [LINE_MAX + 1];
+    char canonical_token [LINE_MAX + 1];
 
     ASSERT (parent != NULL);
     newnode = (lrnode *) Check (malloc (sizeof (lrnode)));
@@ -466,9 +466,9 @@ static lrnode *alloc_node (char type, lrnode *parent, lrnode *sibling)
     newnode-> child = NULL;             /*  Set node pointers to NULL        */
     newnode-> next  = NULL;
     newnode-> type  = type;             /*  Set node type                    */
-    strcpy (canonical, token);
+    strcpy (canonical_token, token);
     newnode-> source_name = StrDup (token);
-    newnode-> name  = resolve_symbol (CleanName (canonical), type);
+    newnode-> name  = resolve_symbol (CleanName (canonical_token), type);
 
     if (sibling)                        /*  Attach to parent or sibling      */
         sibling-> next = newnode;
