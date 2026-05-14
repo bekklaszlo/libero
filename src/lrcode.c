@@ -2238,7 +2238,8 @@ handler_for_do_state (void)
     if (state_nbr < stats-> states)
       {
         strcpy (do_block.name_symbol,
-                TrueName (stats-> snames [state_nbr]));
+                TrueName (OriginalName (
+                    listhead, 's', stats-> snames [state_nbr])));
         strcpy (do_block.comma_symbol,
                (state_nbr < stats-> states - 1? std_comma_before-> svalue:
                                                 std_comma_last-> svalue));
@@ -2295,7 +2296,8 @@ handler_for_do_event (void)
             event_nbr      = do_loop_event-> number;
             the_next_event = ok_event;
             sym_values (std_next_state, 0,
-                TrueName (stats-> snames [do_loop_event-> child-> number]));
+                TrueName (OriginalName (listhead,
+                    's', stats-> snames [do_loop_event-> child-> number])));
             do_loop_module = do_loop_event-> child-> next;
           }
       }
@@ -2308,7 +2310,8 @@ handler_for_do_event (void)
     /*  Generate event code                                                  */
     if (the_next_event == ok_event)
       {
-        strcpy (do_block.name_symbol, stats-> enames [event_nbr]);
+        strcpy (do_block.name_symbol,
+                OriginalName (listhead, 'e', stats-> enames [event_nbr]));
         strcat (do_block.name_symbol, "_event");
         strcpy (do_block.name_symbol, TrueName (do_block.name_symbol));
         strcpy (do_block.comma_symbol,
@@ -2387,7 +2390,8 @@ handler_for_do_module (void)
     /*  Generate module code                                                 */
     if (the_next_event == ok_event)
       {
-        strcpy (do_block.name_symbol, TrueName (stats-> mnames [module_nbr]));
+        strcpy (do_block.name_symbol, TrueName (
+                OriginalName (listhead, 'm', stats-> mnames [module_nbr])));
         strcpy (do_block.comma_symbol,
               (module_nbr < stats-> modules - 1? std_comma_before-> svalue:
                                                  std_comma_last-> svalue));
@@ -2826,7 +2830,10 @@ handler_for_do_stubs (void)
                     token [name_size] = 0;
 
                     for (modnbr = 0; modnbr < stats-> modules; modnbr++)
-                        if (streq (token, TrueName (stats-> mnames [modnbr]))
+                        if (streq (token, TrueName (
+                                        OriginalName (
+                                            listhead, 'm',
+                                            stats-> mnames [modnbr])))
                         &&  flags [modnbr] == 0)
                           {
                             flags [modnbr] = 1;
@@ -2886,7 +2893,8 @@ handler_for_do_stubs (void)
           {
             if (flags [modnbr] == 0)
               {
-                build_stub_header (stats-> mnames [modnbr]);
+                build_stub_header (OriginalName (
+                                   listhead, 'm', stats-> mnames [modnbr]));
                 module_done = TRUE;
               }
             modnbr++;

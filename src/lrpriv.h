@@ -164,6 +164,7 @@
 
 struct _lrnode {                        /*  Node in state diagram            */
     char *name,                         /*  Item name in symbol table        */
+         *source_name,                  /*  Original source item name        */
          type;                          /*  Item type: s, e, m, or n         */
     lrindex_t number;                   /*  Item number                      */
     struct _lrnode
@@ -194,6 +195,7 @@ Bool    ReservedName        (char *name);
 char   *TrueName            (char *name);
 char   *CleanName           (char *name);
 char   *ExternalName        (char *name);
+char   *OriginalName        (lrnode *listhead, char type, char *name);
 void   *Check               (void *ptr);
 lrindex_t GetSymNumber      (char *name);
 void      PutSymNumber      (char *name, lrindex_t number);

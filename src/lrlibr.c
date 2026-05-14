@@ -308,6 +308,36 @@ void PutSymNumber (char *name, lrindex_t number)
 }
 
 
+char *OriginalName (lrnode *listhead, char type, char *name)
+{
+    lrnode
+        *state,
+        *event,
+        *module;
+
+    for (state = listhead-> child; state; state = state-> next)
+      {
+        if (type == 's' && streq (state-> name, name))
+            return (state-> source_name);
+
+        for (event = state-> child; event; event = event-> next)
+          {
+            if (type == 'e' && streq (event-> name, name))
+                return (event-> source_name);
+
+            if (event-> child == NULL)
+                continue;
+            for (module = event-> child; module; module = module-> next)
+                if (type == 'm'
+                &&  module-> type == 'm'
+                &&  streq (module-> name, name))
+                    return (module-> source_name);
+          }
+      }
+    return (name);
+}
+
+
 /*-----------------------------.
  |  NamedState                 |
  |-----------------------------`---------------------------------------------. 
@@ -356,6 +386,7 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
             PutSymNumber (module-> name,
                 GetSymNumber (module-> name) - 1);
             next = module-> next;
+            free (module-> source_name);
             free (module);
             module = next;
           }
@@ -363,6 +394,7 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
         PutSymNumber (event-> name,
             GetSymNumber (event-> name) - 1);
         next = event-> next;
+        free (event-> source_name);
         free (event);
         event = next;
       }
@@ -381,6 +413,7 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
       }
     /*  Decrement usage count and delete node                                */
     PutSymNumber (state-> name, GetSymNumber (state-> name) - 1);
+    free (state-> source_name);
     free (state);                       /*  Free state node                  */
     return (next);                      /*    and return state sibling       */
 }
