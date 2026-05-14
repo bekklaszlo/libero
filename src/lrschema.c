@@ -124,7 +124,7 @@ MODULE $"terminate_the_program" (void)
 /*- Symbolic constants and event numbers ------------------------------------*/
 
 :if check
-#define _LR_STOP                        0xFFFFL
+#define _LR_STOP                        LR_STOP_INDEX
 #define _LR_NULL_EVENT                  -2
 :endif
 enum {
@@ -146,18 +146,18 @@ enum {
 
 /*- Variables used by dialog interpreter ------------------------------------*/
 
-typedef int event_t;                    /*  Type for dialog entity           */
+typedef int32_t event_t;                /*  Type for dialog entity           */
 typedef void (fsmfunct) (void);         /*  Address of FSM function          */
 
 static event_t
     _LR_event,                          /*  Event for state transition       */
     _LR_state,                          /*  Current dialog state             */
     _LR_savest,                         /*  Saved dialog state               */
-    _LR_index,                          /*  Index into vector table          */
     $"the_next_event",                  /*  Next event from module           */
     $"the_exception_event";             /*  Exception event from module      */
 
-static dbyte
+static lrindex_t
+    _LR_index,                          /*  Index into vector table          */
    *_LR_vecptr;                         /*  Pointer into vector table        */
 
 static Bool
@@ -191,7 +191,7 @@ MODULE $name                            (void);
 
 /*- Static areas ------------------------------------------------------------*/
 
-static dbyte _LR_nextst [][$events] =
+static lrindex_t _LR_nextst [][$events] =
 {
 :do nextst
 :  if $overflow = 0
@@ -206,7 +206,7 @@ static dbyte _LR_nextst [][$events] =
 :enddo
 };
 
-static dbyte _LR_action [][$events] =
+static lrindex_t _LR_action [][$events] =
 {
 :set array_base=1
 :do action
@@ -223,7 +223,7 @@ static dbyte _LR_action [][$events] =
 :set array_base=0
 };
 
-static dbyte _LR_vector [][$maxaction+1] =
+static lrindex_t _LR_vector [][$maxaction+1] =
 {
     {0},
 :do vector

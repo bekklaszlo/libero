@@ -6,7 +6,7 @@
 
 /*- Symbolic constants and event numbers ------------------------------------*/
 
-#define _LR_STOP                        0xFFFFL
+#define _LR_STOP                        LR_STOP_INDEX
 #define _LR_NULL_EVENT                  -2
 enum {
     terminate_event = -1,
@@ -56,18 +56,18 @@ enum {
 
 /*- Variables used by dialog interpreter ------------------------------------*/
 
-typedef int event_t;                    /*  Type for dialog entity           */
+typedef int32_t event_t;                /*  Type for dialog entity           */
 typedef void (fsmfunct) (void);         /*  Address of FSM function          */
 
 static event_t
     _LR_event,                          /*  Event for state transition       */
     _LR_state,                          /*  Current dialog state             */
     _LR_savest,                         /*  Saved dialog state               */
-    _LR_index,                          /*  Index into vector table          */
     the_next_event,                     /*  Next event from module           */
     the_exception_event;                /*  Exception event from module      */
 
-static dbyte
+static lrindex_t
+    _LR_index,                          /*  Index into vector table          */
    *_LR_vecptr;                         /*  Pointer into vector table        */
 
 static Bool
@@ -128,7 +128,7 @@ MODULE write_message_to_stdout          (void);
 
 /*- Static areas ------------------------------------------------------------*/
 
-static dbyte _LR_nextst [][32] =
+static lrindex_t _LR_nextst [][32] =
 {
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0
      ,0,0
@@ -147,7 +147,7 @@ static dbyte _LR_nextst [][32] =
     }
 };
 
-static dbyte _LR_action [][32] =
+static lrindex_t _LR_action [][32] =
 {
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0
      ,0,0
@@ -166,7 +166,7 @@ static dbyte _LR_action [][32] =
     }
 };
 
-static dbyte _LR_vector [][6+1] =
+static lrindex_t _LR_vector [][6+1] =
 {
     {0},
     {0,21,15,_LR_STOP},
@@ -250,4 +250,3 @@ static fsmfunct *_LR_module [] =
     trace_symbols_if_wanted,
     write_message_to_stdout
 };
-

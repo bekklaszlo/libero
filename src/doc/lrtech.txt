@@ -701,7 +701,7 @@ collapsed.
 iteration; then <TT>$comma_last</TT>.
 <LI><TT>$offset</TT> - offset of start of current row, added to
 <TT>$array_base</TT>.  The offset is counted up by 1 for each item in a
-row, including an assumed terminator value (0xFFFF).
+row, including the generated terminator value.
 <LI><TT>$tally</TT> - number of items in <TT>$row</TT>, including one
 terminator value.
 </UL>
@@ -898,23 +898,20 @@ all Libero programs (and if you are smart, drop me a line explaining your
 reasons):
 <UL>
 <LI><TT>LR_SYMBOLMAX</TT> - the size of Libero's symbol table.  This table is
-used to hold all state, event, and module names.  Defined as 32000; maximum
-value is 32767.
+used to hold all state, event, and module names.  Defined as 1048576.
 
 <LI><TT>LR_STATEMAX</TT> - the maximum number of states in the dialog.
-Defined as 1000.  Maximum value is 16383, assuming schema can handle it.
+Defined as 1024.
 
 <LI><TT>LR_EVENTMAX</TT> - the maximum number of different events in the
-dialog.  Defined as 1000.  Maximum value is 16383, assuming schema can handle
-it.
+dialog.  Defined as 512.
 
 <LI><TT>LR_MODULEMAX</TT> - the maximum number of different modules in the
-dialog.  Defined as 1000.  Maximum value is 16383, assuming schema can handle
-it.
+dialog.  Defined as 20000.
 
 <LI><TT>LR_VECTORMAX</TT> - the maximum number of different vectors in the
-dialog.  Defined as 1000.  <TT>LR_VECTORMAX * 2 * $maxaction</TT> should not
-be larger than 32k.
+dialog.  Defined as 50000.  The practical limit depends on available memory
+and the size of the generated action vectors.
 
 <LI><TT>LR_FILENAMEMAX</TT> - the maximum size of a filename with extension,
 but not path.  Defined as 128 characters.
@@ -942,10 +939,9 @@ maximum size of a dialog actually depends on available memory.  You should
 only change the constants in <TT>lrpriv.h</TT> if you get a message that
 specifically says that you have reached such a limit.
 
-<P>The code that the standard C schema generates assumes that events can be
-stored in a signed 16-bit word; while state, module, and action numbers can
-be stored in an unsigned 16-bit word.  A more compact version could be made
-by using 8-bit values.
+<P>The standard C and C++ schemas now generate 32-bit FSM tables and use a
+32-bit terminator value for action vectors.  State, event, module, action,
+and symbol numbering therefore require a 32-bit minimum compiler model.
 
 <P>If you change Libero, or suspect bugs, compile with the symbol
 <TT>DEBUG</TT> defined.  This switches on the assertions that are sprinkled

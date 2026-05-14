@@ -33,11 +33,11 @@
 
 /*  Limits of buffers and other symbolic definitions                         */
 
-#define LR_SYMBOLMAX          32000     /*  Max size of symbol table         */
-#define LR_STATEMAX            1000     /*  Maximum states in dialog         */
-#define LR_EVENTMAX            1000     /*  Maximum events in dialog         */
-#define LR_VECTORMAX           1000     /*  Maximum vectors in dialog        */
-#define LR_MODULEMAX           1000     /*  Maximum modules in dialog        */
+#define LR_SYMBOLMAX        1048576     /*  Max size of symbol table         */
+#define LR_STATEMAX            1024     /*  Maximum states in dialog         */
+#define LR_EVENTMAX             512     /*  Maximum events in dialog         */
+#define LR_VECTORMAX          50000     /*  Maximum vectors in dialog        */
+#define LR_MODULEMAX          20000     /*  Maximum modules in dialog        */
 #define LR_FILENAMEMAX          128     /*  Maximum length of a filename     */
 #define LR_NULL_STATE            -1     /*  Used for next state number       */
 #define LR_HEADER_WIDTH          79     /*  Default header line width        */
@@ -165,7 +165,7 @@
 struct _lrnode {                        /*  Node in state diagram            */
     char *name,                         /*  Item name in symbol table        */
          type;                          /*  Item type: s, e, m, or n         */
-    dbyte number;                       /*  Item number                      */
+    lrindex_t number;                   /*  Item number                      */
     struct _lrnode
          *next,                         /*  Pointer to next sibling          */
          *child;                        /*  Pointer to first child           */
@@ -195,8 +195,8 @@ char   *TrueName            (char *name);
 char   *CleanName           (char *name);
 char   *ExternalName        (char *name);
 void   *Check               (void *ptr);
-dbyte   GetSymNumber        (char *name);
-void    PutSymNumber        (char *name, dbyte number);
+lrindex_t GetSymNumber      (char *name);
+void      PutSymNumber      (char *name, lrindex_t number);
 lrnode *NamedState          (lrnode *head, char *name);
 lrnode *DeleteState         (lrnode *head, lrnode *state);
 

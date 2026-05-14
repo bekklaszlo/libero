@@ -6,7 +6,7 @@
 
 /*- Symbolic constants and event numbers ------------------------------------*/
 
-#define _LR_STOP                        0xFFFFL
+#define _LR_STOP                        LR_STOP_INDEX
 #define _LR_NULL_EVENT                  -2
 enum {
     terminate_event = -1,
@@ -33,18 +33,18 @@ enum {
 
 /*- Variables used by dialog interpreter ------------------------------------*/
 
-typedef int event_t;                    /*  Type for dialog entity           */
+typedef int32_t event_t;                /*  Type for dialog entity           */
 typedef void (fsmfunct) (void);         /*  Address of FSM function          */
 
 static event_t
     _LR_event,                          /*  Event for state transition       */
     _LR_state,                          /*  Current dialog state             */
     _LR_savest,                         /*  Saved dialog state               */
-    _LR_index,                          /*  Index into vector table          */
     the_next_event,                     /*  Next event from module           */
     the_exception_event;                /*  Exception event from module      */
 
-static dbyte
+static lrindex_t
+    _LR_index,                          /*  Index into vector table          */
    *_LR_vecptr;                         /*  Pointer into vector table        */
 
 static Bool
@@ -73,7 +73,7 @@ MODULE unstack_if_left_par              (void);
 
 /*- Static areas ------------------------------------------------------------*/
 
-static dbyte _LR_nextst [][9] =
+static lrindex_t _LR_nextst [][9] =
 {
     { 0,0,0,0,0,0,1,0,0 },
     { 1,0,0,0,2,3,0,0,1 },
@@ -82,7 +82,7 @@ static dbyte _LR_nextst [][9] =
     { 4,0,4,4,4,4,0,4,4 }
 };
 
-static dbyte _LR_action [][9] =
+static lrindex_t _LR_action [][9] =
 {
     { 0,2,0,0,0,0,1,0,0 },
     { 2,0,0,0,5,4,0,0,3 },
@@ -91,7 +91,7 @@ static dbyte _LR_action [][9] =
     { 10,0,2,9,9,9,0,9,9 }
 };
 
-static dbyte _LR_vector [][3+1] =
+static lrindex_t _LR_vector [][3+1] =
 {
     {0},
     {1,_LR_STOP},
@@ -120,4 +120,3 @@ static fsmfunct *_LR_module [] =
     unstack_if_end_mark,
     unstack_if_left_par
 };
-

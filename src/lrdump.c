@@ -51,9 +51,9 @@ void lr_dump_dialog (lrnode *listhead, lrstat *stats)
     for (typeptr = listhead-> name; *typeptr; )
       {
 	numbptr = (byte *) typeptr + sizeof (char);
-	nameptr = (char *) numbptr + sizeof (dbyte);
-        Trace ("%c %3d %s", *typeptr, (*numbptr << 8) + *(numbptr + 1),
-							      nameptr);
+	nameptr = (char *) numbptr + sizeof (lrindex_t);
+        Trace ("%c %3lu %s", *typeptr,
+               (unsigned long) GetSymNumber (nameptr), nameptr);
 	typeptr = strchr (nameptr, 0) + 1;
       }
 
@@ -78,16 +78,17 @@ void lr_dump_dialog (lrnode *listhead, lrstat *stats)
     Trace ("----------------------");
     for (state = listhead-> child; state; state = state-> next)
       {
-        Trace ("%3d %s:", state-> number, state-> name);
+        Trace ("%3lu %s:", (unsigned long) state-> number, state-> name);
 	for (event = state-> child; event; event = event-> next)
 	  {
 	    module = event-> child;
-            Trace ("    (%02d) %-40s -> %3d %s",
-		   event-> number,  event-> name,
-		   module-> number, module-> name);
+            Trace ("    (%02lu) %-40s -> %3lu %s",
+		   (unsigned long) event-> number,  event-> name,
+		   (unsigned long) module-> number, module-> name);
 
 	    for (module = module-> next; module; module = module-> next)
-                Trace ("        %3d + %s", module-> number, module-> name);
+                Trace ("        %3lu + %s",
+                       (unsigned long) module-> number, module-> name);
 	  }
         Trace ("");
       }
