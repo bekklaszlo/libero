@@ -558,6 +558,8 @@ static char *lookup_source_name (char type, char *name)
             if (type == 'e' && streq (event-> name, name))
                 return (event-> source_name);
 
+            if (event-> child == NULL)
+                continue;
             for (module = event-> child-> next; module; module = module-> next)
                 if (type == 'm' && streq (module-> name, name))
                     return (module-> source_name);
