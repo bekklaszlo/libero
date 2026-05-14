@@ -356,6 +356,7 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
             PutSymNumber (module-> name,
                 GetSymNumber (module-> name) - 1);
             next = module-> next;
+            free (module-> source_name);
             free (module);
             module = next;
           }
@@ -363,6 +364,7 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
         PutSymNumber (event-> name,
             GetSymNumber (event-> name) - 1);
         next = event-> next;
+        free (event-> source_name);
         free (event);
         event = next;
       }
@@ -381,6 +383,7 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
       }
     /*  Decrement usage count and delete node                                */
     PutSymNumber (state-> name, GetSymNumber (state-> name) - 1);
+    free (state-> source_name);
     free (state);                       /*  Free state node                  */
     return (next);                      /*    and return state sibling       */
 }

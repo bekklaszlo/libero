@@ -132,6 +132,7 @@ static void    init_charmaps      (void);
 static void    build_charmap      (byte flag, char *chars);
 static lrnode *alloc_node         (char type, lrnode *parent, lrnode *sibling);
 static char   *resolve_symbol     (char *name, char type);
+static char   *lookup_source_name (char type, char *name);
 static void    syntax_error       (int exception, int msgid, ...);
 static void    resolve_superstate (SS_REF *refnode);
 static void    inherit_events     (lrnode *state, lrnode *super_state);
@@ -157,6 +158,7 @@ MODULE initialise_the_program (void)
     listhead-> next  =                  /*  Set list head pointers to null   */
     listhead-> child =
     last_state       = NULL;            /*  Set other pointers to null       */
+    listhead-> source_name = NULL;
 
     line_nbr = 0;                       /*  Nothing read from file yet       */
 
@@ -457,6 +459,7 @@ MODULE attach_new_state (void)
 static lrnode *alloc_node (char type, lrnode *parent, lrnode *sibling)
 {
     lrnode *newnode;
+    char canonical [LINE_MAX + 1];
 
     ASSERT (parent != NULL);
     newnode = (lrnode *) Check (malloc (sizeof (lrnode)));
@@ -464,7 +467,9 @@ static lrnode *alloc_node (char type, lrnode *parent, lrnode *sibling)
     newnode-> child = NULL;             /*  Set node pointers to NULL        */
     newnode-> next  = NULL;
     newnode-> type  = type;             /*  Set node type                    */
-    newnode-> name  = resolve_symbol (CleanName (token), type);
+    strcpy (canonical, token);
+    newnode-> source_name = StrDup (token);
+    newnode-> name  = resolve_symbol (CleanName (canonical), type);
 
     if (sibling)                        /*  Attach to parent or sibling      */
         sibling-> next = newnode;
@@ -534,6 +539,31 @@ static char *resolve_symbol (char *name, char type)
     /*  Increment usage count                                                */
     PutSymNumber (nameptr, GetSymNumber (nameptr) + 1);
     return (nameptr);
+}
+
+
+static char *lookup_source_name (char type, char *name)
+{
+    lrnode *state,
+           *event,
+           *module;
+
+    for (state = listhead-> child; state; state = state-> next)
+      {
+        if (type == 's' && streq (state-> name, name))
+            return (state-> source_name);
+
+        for (event = state-> child; event; event = event-> next)
+          {
+            if (type == 'e' && streq (event-> name, name))
+                return (event-> source_name);
+
+            for (module = event-> child-> next; module; module = module-> next)
+                if (type == 'm' && streq (module-> name, name))
+                    return (module-> source_name);
+          }
+      }
+    return (NULL);
 }
 
 
@@ -822,15 +852,15 @@ inherit_events (lrnode *target, lrnode *super_state)
         if (event-> name != super_event-> name)
           {
             module = NULL;
-            strcpy (token, super_event-> name);
+            strcpy (token, super_event-> source_name);
             event = alloc_node ('e', target, event);
             for (super_module = super_event-> child;
                  super_module;
                  super_module = super_module-> next)
               {
-                strcpy (token, super_module-> name);
-                if (streq (token, super_state-> name))
-                    strcpy (token, target-> name);
+                strcpy (token, super_module-> source_name);
+                if (streq (super_module-> name, super_state-> name))
+                    strcpy (token, target-> source_name);
                 module = alloc_node (super_module-> type, event, module);
               }
           }
@@ -848,19 +878,22 @@ duplicate_event (lrnode *state, lrnode *event, char *name)
         *old_child,
         *new_event,
         *new_child;
+    char
+        *source_name;
 
     /*  Find last event in state, and add after that one                     */
     for (old_event = event; old_event-> next; old_event = old_event-> next);
 
     /*  Create event node                                                    */
-    strcpy (token, name);
+    source_name = lookup_source_name ('e', name);
+    strcpy (token, source_name? source_name: name);
     new_event = alloc_node ('e', state, old_event);
 
     /*  Copy event child nodes                                               */
     new_child = NULL;
     for (old_child = event-> child; old_child; old_child = old_child-> next)
       {
-        strcpy (token, old_child-> name);
+        strcpy (token, old_child-> source_name);
         new_child = alloc_node (old_child-> type, new_event, new_child);
       }
 }
@@ -880,6 +913,7 @@ remove_event (lrnode *state, lrnode *event)
         /*  Decrement usage count and delete node                            */
         PutSymNumber (child-> name, GetSymNumber (child-> name) - 1);
         next = child-> next;
+        free (child-> source_name);
         free (child);
         child = next;
         feedback--;                     /*  Dialog is one node smaller       */
@@ -899,6 +933,7 @@ remove_event (lrnode *state, lrnode *event)
 
     /*  Decrement usage count and delete node                                */
     PutSymNumber (event-> name, GetSymNumber (event-> name) - 1);
+    free (event-> source_name);
     free (event);                       /*  Free event node                  */
     feedback--;                         /*  Dialog is one node smaller       */
 }

@@ -164,6 +164,7 @@
 
 struct _lrnode {                        /*  Node in state diagram            */
     char *name,                         /*  Item name in symbol table        */
+         *source_name,                  /*  Original source item name        */
          type;                          /*  Item type: s, e, m, or n         */
     lrindex_t number;                   /*  Item number                      */
     struct _lrnode
