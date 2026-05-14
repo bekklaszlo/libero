@@ -152,7 +152,8 @@ int lr_sort_dialog (lrnode *listhead, lrstat *stats)
       {
         /*  Find size of symbol table                                        */
         for (symptr = listhead-> name; *symptr; )
-            symptr = strchr (symptr + 3, 0) + 1;
+            symptr = strchr (symptr + sizeof (char) + sizeof (lrindex_t), 0)
+                   + 1;
 
         PrintMessage (MSG_STATS, stats-> states,
                                  stats-> events,
@@ -170,8 +171,9 @@ collect_names (lrnode *listhead, char type, char **names, int sort)
     char
         *typeptr,                       /*  Pointer to symbol type char      */
         *nameptr;                       /*  Pointer to symbol name           */
-    dbyte
-        item,                           /*  Used to scan table               */
+    lrindex_t
+        item;                           /*  Used to scan table               */
+    int
         count;                          /*  Number of items found            */
     byte
         *numbptr;                       /*  Pointer to symbol number         */
@@ -181,7 +183,7 @@ collect_names (lrnode *listhead, char type, char **names, int sort)
     for (typeptr = listhead-> name; *typeptr; )
       {
         numbptr = (byte *) typeptr + sizeof (type);
-        nameptr = (char *) numbptr + sizeof (dbyte);
+        nameptr = (char *) numbptr + sizeof (lrindex_t);
         if (*typeptr == type && GetSymNumber (nameptr) > 0)
             names [count++] = nameptr;
         typeptr = strchr (nameptr, 0) + 1;
@@ -220,7 +222,7 @@ find_next_state (lrnode *node, char **names, int statenbr)
         if (nameptr == NULL)
           {
             PrintMessage (MSG_NEXT_STATE_NF, node-> name);
-            node-> number = (dbyte) statenbr;
+            node-> number = (lrindex_t) statenbr;
             break;
           }
         else

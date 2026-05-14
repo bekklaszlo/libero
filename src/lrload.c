@@ -482,7 +482,7 @@ static lrnode *alloc_node (char type, lrnode *parent, lrnode *sibling)
  |                                                                           |
  |  Description: searches for a name of the appropriate type in the symbol   |
  |  table and inserts it if necessary.  Each entry in the symbol table is    |
- |  composed of a type (1 char), number (dbyte), and name (string).  The     |
+ |  composed of a type (1 char), number (lrindex_t), and name (string).  The |
  |  last entry in the table is followed by a zero.                           |
  |                                                                           |
  |  Returns: a pointer to the newly-established name, or null if the symbol  |
@@ -501,7 +501,7 @@ static char *resolve_symbol (char *name, char type)
     FOREVER
       {
         numbptr = (byte *) typeptr + sizeof (char);
-        nameptr = (char *) numbptr + sizeof (dbyte);
+        nameptr = (char *) numbptr + sizeof (lrindex_t);
         typechr = *typeptr;
         if (typechr == 0)
             break;                      /*  At end of table, not found       */
@@ -514,7 +514,11 @@ static char *resolve_symbol (char *name, char type)
       }
     if (typechr == 0)                   /*  Insert new name                  */
       {
-        if (nameptr + strlen (name) + sizeof (dbyte) > maxname)
+        size_t
+            entry_size = sizeof (char) + sizeof (lrindex_t)
+                       + strlen (name) + 1;
+
+        if ((size_t) (maxname - typeptr) < entry_size)
           {
             PrintMessage (MSG_SYS_SYMBOL_FULL);
             raise_exception (error_event);
@@ -528,7 +532,7 @@ static char *resolve_symbol (char *name, char type)
           }
       }
     /*  Increment usage count                                                */
-    PutSymNumber (nameptr, (dbyte) (GetSymNumber (nameptr) + 1));
+    PutSymNumber (nameptr, GetSymNumber (nameptr) + 1);
     return (nameptr);
 }
 
@@ -736,7 +740,7 @@ MODULE expand_macro_constructs (void)
                 /*  Find all events not handled in state, and add them       */
                 for (symptr = listhead-> name; *symptr; )
                   {
-                    nameptr = symptr + sizeof (char) + sizeof (dbyte);
+                    nameptr = symptr + sizeof (char) + sizeof (lrindex_t);
                     if (*symptr == 'e')
                       {
                         found = FALSE;
@@ -874,7 +878,7 @@ remove_event (lrnode *state, lrnode *event)
     for (child = event-> child; child; )
       {
         /*  Decrement usage count and delete node                            */
-        PutSymNumber (child-> name, (dbyte) (GetSymNumber (child-> name) - 1));
+        PutSymNumber (child-> name, GetSymNumber (child-> name) - 1);
         next = child-> next;
         free (child);
         child = next;
@@ -894,7 +898,7 @@ remove_event (lrnode *state, lrnode *event)
               }
 
     /*  Decrement usage count and delete node                                */
-    PutSymNumber (event-> name, (dbyte) (GetSymNumber (event-> name) - 1));
+    PutSymNumber (event-> name, GetSymNumber (event-> name) - 1);
     free (event);                       /*  Free event node                  */
     feedback--;                         /*  Dialog is one node smaller       */
 }

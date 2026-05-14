@@ -48,7 +48,8 @@ typedef struct DO_BLOCK_tag {
            handler;                     /*  Function that handles action     */
     dbyte  start_line;                  /*  Number of line after :do         */
     dbyte  end_line;                    /*  Number of line after :enddo      */
-    dbyte  iteration;                   /*  Number of times through loop     */
+    lrindex_t
+           iteration;                   /*  Number of times through loop     */
     char   srcline      [LINE_MAX + 1]; /*  :do action line before parsing   */
     char   curline      [LINE_MAX + 1]; /*  :do action line after parsing    */
     char   name_symbol  [LINE_MAX + 1]; /*  $name symbol for do_block        */
@@ -136,17 +137,21 @@ static byte
 static int
     feedback,                           /*  Feedback to calling program      */
     array_base,                         /*  Current value of array_base      */
-    vectorcnt,                          /*  Number of action vectors         */
     name_case,                          /*  Case upper/lower of last token   */
     char_nbr,                           /*  Current read position in line    */
     schema_format;                      /*  Schema language format if known  */
+
+static lrindex_t
+    vectorcnt;                          /*  Number of action vectors         */
 
 static size_t
     substr_from,                        /*  Substring specification          */
     substr_size;                        /*    from :substr action            */
 
 static dbyte
-    line_nbr,                           /*  Input line nbr from schema file  */
+    line_nbr;                           /*  Input line nbr from schema file  */
+
+static lrindex_t
     *transit,                           /*  Points to event list for state   */
     *vectors,                           /*  Points to list of action vectors */
     *actions;                           /*  Current action vector            */
@@ -213,6 +218,7 @@ static symbol
 /*  Function prototypes                                                      */
 
 static void    init_standard_values    (void);
+static void   *checked_alloc_array     (size_t count, size_t size);
 static void    refresh_symbol_pointers (void);
 static void    init_do_block_values    (DO_BLOCK *do_block);
 static void    init_do_block_symbols   (void);
@@ -324,20 +330,44 @@ MODULE initialise_the_program (void)
 
 MODULE alloc_symbol_table (void)
 {
+    size_t
+        action_count,
+        vector_count;
+
     int_tab = sym_create_table ();      /*  Create module table              */
     var_tab = sym_create_table ();      /*  Create symbol table              */
     init_standard_values ();            /*    and load standard variables    */
 
     /*  Allocate memory blocks                                               */
-    transit = (dbyte *) Check (malloc (LR_EVENTMAX * sizeof (dbyte)));
-    actions = (dbyte *) Check (malloc (sizeof (dbyte)
-                                       * (stats-> maxaction + 1)));
-    vectors = (dbyte *) Check (malloc (LR_VECTORMAX * sizeof (dbyte)
-                                       * (stats-> maxaction + 1)));
+    action_count = (size_t) stats-> maxaction + 1;
+    vector_count = LR_VECTORMAX;
+    if (action_count != 0 && vector_count > (SIZE_MAX / action_count))
+      {
+        PrintMessage (MSG_OUT_OF_MEMORY);
+        exit (EXIT_FAILURE);
+      }
+    transit = (lrindex_t *) checked_alloc_array (LR_EVENTMAX,
+                                                 sizeof (lrindex_t));
+    actions = (lrindex_t *) checked_alloc_array (action_count,
+                                                 sizeof (lrindex_t));
+    vectors = (lrindex_t *) checked_alloc_array (vector_count * action_count,
+                                                 sizeof (lrindex_t));
     init_do_block_values (&do_block);
     init_if_block_values (&if_block);
     init_charmaps ();                   /*  Initialise character maps        */
     init_vectors ();                    /*  Calculate vectors                */
+}
+
+
+static void *
+checked_alloc_array (size_t count, size_t size)
+{
+    if (size != 0 && count > (SIZE_MAX / size))
+      {
+        PrintMessage (MSG_OUT_OF_MEMORY);
+        exit (EXIT_FAILURE);
+      }
+    return (Check (malloc (count * size)));
 }
 
 
@@ -623,18 +653,21 @@ init_vectors (void)
            *event,                      /*  Pointer to event                 */
            *nextstate,                  /*  Pointer to next state node       */
            *module;
-    int     modnbr,
-            vecnbr,
-            vecsize;                    /*  Size of vector in bytes          */
-    dbyte  *nextvec;                    /*  Pointer to next vector in table  */
+    lrindex_t
+        modnbr,
+        vecnbr;
+    size_t
+        vecsize;                        /*  Size of vector in bytes          */
+    lrindex_t
+        *nextvec;                       /*  Pointer to next vector in table  */
 
     vectorcnt = 0;                      /*  Have no vectors so far           */
-    vecsize = (stats-> maxaction + 1) * sizeof (dbyte);
+    vecsize = ((size_t) stats-> maxaction + 1) * sizeof (lrindex_t);
 
     /*  Scan through each state in the dialog                                */
     for (state = listhead-> child; state; state = state-> next)
       {
-        memset ((void *) transit, 0, sizeof (dbyte) * LR_EVENTMAX);
+        memset ((void *) transit, 0, sizeof (lrindex_t) * LR_EVENTMAX);
 
         /*  Scan through each event in the state                             */
         for (event = state-> child; event; event = event-> next)
@@ -647,7 +680,7 @@ init_vectors (void)
             for (module = nextstate-> next; module; module = module-> next)
                 actions [modnbr++] = module-> number;
 
-            actions [modnbr] = 0xFFFFUL;
+            actions [modnbr] = LR_STOP_INDEX;
             nextvec = vectors + stats-> maxaction + 1;
             for (vecnbr = 0; vecnbr < vectorcnt; vecnbr++)
               {
@@ -665,7 +698,7 @@ init_vectors (void)
                   }
                 memcpy ((void *) nextvec, (void *) actions, vecsize);
               }
-            transit [event-> number] = (dbyte) (vecnbr + array_base);
+            transit [event-> number] = (lrindex_t) (vecnbr + array_base);
           }
       }
     std_vectors-> ivalue = vectorcnt;
@@ -2154,7 +2187,7 @@ MODULE test_do_conditions (void)
     expand_symbols (curline);
     the_next_event = done_event;        /*  Most common case...              */
 
-    if (do_block.iteration < (dbyte) std_run_away-> ivalue)
+    if (do_block.iteration < (lrindex_t) std_run_away-> ivalue)
       {
         do_block.handler ();            /*  Do handler for action            */
         do_block.iteration++;           /*    and count our way around       */
@@ -2193,7 +2226,7 @@ init_do_block_symbols (void)            /*  Set default empty values         */
 static void
 handler_for_do_state (void)
 {
-    dbyte
+    lrindex_t
         state_nbr;
 
     if (do_block.iteration == 0)
@@ -2236,7 +2269,7 @@ handler_for_do_event (void)
 {
     static Bool
         local_event_list;               /*  Do we want a local event list?   */
-    dbyte
+    lrindex_t
         event_nbr = 0;
 
     if (do_block.iteration == 0)        /*  First time - parse command       */
@@ -2317,7 +2350,7 @@ handler_for_do_module (void)
 {
     static Bool
         local_module_list;              /*  Do we want a local module list?  */
-    dbyte
+    lrindex_t
         module_nbr = 0;
 
     if (do_block.iteration == 0)        /*  First time - parse command       */
@@ -2388,30 +2421,32 @@ static void
 handler_for_do_action (void)
 {
     static lrnode *state;               /*  Pointer to state in dialog list  */
-    static int     offset,              /*  Offset of vector in output table */
-                   vecsize;             /*  Size of vector in bytes          */
+    static int     offset;              /*  Offset of vector in output table */
+    static size_t  vecsize;             /*  Size of vector in bytes          */
 
     lrnode *event,                      /*  Pointer to event                 */
            *nextstate,                  /*  Pointer to next state node       */
            *module;
-    int     eventnbr,
-            modnbr,
-            vecnbr;
-    dbyte  *nextvec;                    /*  Pointer to next vector in table  */
+    lrindex_t
+        eventnbr,
+        modnbr,
+        vecnbr;
+    lrindex_t
+        *nextvec;                       /*  Pointer to next vector in table  */
     ROWT   *row;                        /*  Pointer to current row block     */
 
     if (do_block.iteration == 0)        /*  We're called once per state      */
       {
         state   = listhead-> child;     /*  First time, iteration is zero    */
         offset  = array_base;           /*  Offset of vector in output table */
-        vecsize = (stats-> maxaction + 1) * sizeof (dbyte);
+        vecsize = ((size_t) stats-> maxaction + 1) * sizeof (lrindex_t);
       }
     if (state)                          /*  List ends when state is null     */
       {
         do_block.offset_symbol = offset;
 
         /*  Build-up transition buffer for this state and all events         */
-        memset ((void *) transit, 0, sizeof (dbyte) * LR_EVENTMAX);
+        memset ((void *) transit, 0, sizeof (lrindex_t) * LR_EVENTMAX);
         for (event = state-> child; event; event = event-> next)
           {
             memset ((void *) actions, 0, vecsize);
@@ -2420,7 +2455,7 @@ handler_for_do_action (void)
             for (module = nextstate-> next; module; module = module-> next)
                 actions [modnbr++] = module-> number;
 
-            actions [modnbr] = 0xFFFFUL;
+            actions [modnbr] = LR_STOP_INDEX;
             nextvec = vectors + stats-> maxaction + 1;
             for (vecnbr = 0; vecnbr < vectorcnt; vecnbr++)
               {
@@ -2430,7 +2465,7 @@ handler_for_do_action (void)
               }
             /*  Vector MUST already exist; built by init_vectors             */
             ASSERT (vecnbr != vectorcnt);
-            transit [event-> number] = (dbyte) (vecnbr + array_base);
+            transit [event-> number] = (lrindex_t) (vecnbr + array_base);
           }
 
         /*  Format one or several row buffers for transition data            */
@@ -2575,7 +2610,7 @@ handler_for_do_nextst (void)
 
         /*  Build-up transition buffer for this state and all events         */
 
-        memset ((void *) transit, 0, sizeof (dbyte) * LR_EVENTMAX);
+        memset ((void *) transit, 0, sizeof (lrindex_t) * LR_EVENTMAX);
         for (event = state-> child; event; event = event-> next)
             transit [event-> number] = event-> child-> number + array_base;
 
@@ -2617,7 +2652,7 @@ handler_for_do_nextst (void)
  *      $comma    - comma_before until the last iteration; then comma_last.
  *      $offset   - offset of start of current row, added to array_base.
  *                  The offset is counted up by 1 for each item in a row,
- *                  including an assumed terminator value (0xFFFF).
+ *                  including the generated terminator value.
  *      $tally    - the number of items in each row, including one
  *                  terminator value (ie. nbr items in $row + 1).
  */
@@ -2626,7 +2661,8 @@ static void
 handler_for_do_vector (void)
 {
     static int  offset;                 /*  Offset of vector in output table */
-    static dbyte *nextvec;              /*  Pointer to next vector in table  */
+    static lrindex_t
+        *nextvec;                       /*  Pointer to next vector in table  */
 
     ROWT *row;                          /*  Pointer to current row block     */
     int  vecnbr = do_block.iteration,
@@ -2646,7 +2682,7 @@ handler_for_do_vector (void)
         for (modnbr = 0; ; modnbr++)
           {
             offset++;
-            if (nextvec [modnbr] == 0xFFFFL)
+            if (nextvec [modnbr] == LR_STOP_INDEX)
                 break;
             sprintf (token, row_format (modnbr),
                     (long)  nextvec [modnbr] + array_base);

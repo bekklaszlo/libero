@@ -178,7 +178,7 @@ MODULE $class::$"get_external_event" (void)
 #ifndef MODULE
 #define MODULE  void                    //  Libero dialog modules
 #endif
-typedef int event_t;                    //  Type for dialog entity
+typedef int32_t event_t;                //  Type for dialog entity
 
 //- Class definition --------------------------------------------------------
 
@@ -210,10 +210,10 @@ class $class
             _LR_event,                  //  Event for state transition
             _LR_state,                  //  Current dialog state
             _LR_savest,                 //  Saved dialog state
-            _LR_index,                  //  Index into vector table
             $"the_next_event",          //  Next event from module
             $"the_exception_event";     //  Exception event from module
-        word
+        lrindex_t
+            _LR_index,                  //  Index into vector table
             *_LR_vecptr;                //  Pointer into vector table
         Bool
             $"exception_raised";        //  TRUE if exception raised
@@ -239,7 +239,7 @@ typedef void ($class::*classfunc) (void);
 /*- Symbolic constants and event numbers ------------------------------------*/
 
 :if check
-#define _LR_STOP                        0xFFFFL
+#define _LR_STOP                        LR_STOP_INDEX
 #define _LR_NULL_EVENT                  -2
 :endif
 enum {
@@ -269,7 +269,7 @@ enum {
 
     //- Static areas --------------------------------------------------------
 
-    static word _LR_nextst [][$events] = {
+    static lrindex_t _LR_nextst [][$events] = {
 :do nextst
 :  if $overflow = 0
         { $row }$comma
@@ -283,7 +283,7 @@ enum {
 :enddo
     };
 
-    static word _LR_action [][$events] = {
+    static lrindex_t _LR_action [][$events] = {
 :set array_base=1
 :do action
 :  if $overflow = 0
@@ -299,7 +299,7 @@ enum {
 :set array_base=0
     };
 
-    static word _LR_vector [][$maxaction + 1] = {
+    static lrindex_t _LR_vector [][$maxaction + 1] = {
         {0},
 :do vector
 :  if "$row" = ""

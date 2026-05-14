@@ -327,8 +327,11 @@ typedef uint16_t        dbyte;          /*  Double byte = 16 bits            */
 typedef uint16_t        word;           /*  Alternative for double-byte      */
 typedef uint32_t        dword;          /*  Double word = 32 bits            */
 typedef uint32_t        qbyte;          /*  Quad byte = 32 bits              */
+typedef uint32_t        lrindex_t;      /*  FSM index = 32 bits              */
 typedef void (*function) (void);        /*  Address of simple function       */
 #define local static void               /*  Shorthand for local functions    */
+
+#define LR_STOP_INDEX   ((lrindex_t) UINT32_MAX)
 
 typedef struct {                        /*  Memory descriptor                */
     size_t size;                        /*    Size of data part              */

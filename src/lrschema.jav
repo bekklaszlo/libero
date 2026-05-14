@@ -218,7 +218,7 @@ abstract public class $source\i extends $extend
 
 :if check
     private static int
-        _LR_STOP            = 0xFFFF,
+        _LR_STOP            = Integer.MAX_VALUE,
         _LR_NULL_EVENT      = -2;
 :endif
     public static int

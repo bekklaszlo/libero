@@ -270,39 +270,41 @@ void *Check (void *ptr)
 /*-----------------------------.
  |  GetSymNumber               |
  |-----------------------------`---------------------------------------------. 
- |  dbyte GetSymNumber (char *name)                                          |
+ |  lrindex_t GetSymNumber (char *name)                                      |
  |                                                                           |
  |  In the Libero state/event/module tables, each name is preceded in        |
  |  memory by the number for that item.  This function extracts and          |
  |  returns that number.                                                     |
  `---------------------------------------------------------------------------*/
 
-dbyte GetSymNumber (char *name)
+lrindex_t GetSymNumber (char *name)
 {
     byte *numbptr;                      /*  Pointer to symbol number         */
+    lrindex_t
+        number;
 
-    numbptr = (byte *) name - sizeof (dbyte);
-    return (dbyte) ((*numbptr << 8) + *(numbptr + 1));
+    numbptr = (byte *) name - sizeof (lrindex_t);
+    memcpy (&number, numbptr, sizeof (number));
+    return (number);
 }
 
 
 /*-----------------------------.
  |  PutSymNumber               |
  |-----------------------------`---------------------------------------------. 
- |  void PutSymNumber (char *name, dbyte number)                             |
+ |  void PutSymNumber (char *name, lrindex_t number)                         |
  |                                                                           |
  |  In the Libero state/event/module tables, each name is preceded in        |
  |  memory by the number for that item.  This function stores a new value    |
  |  for that number.                                                         |
  `---------------------------------------------------------------------------*/
 
-void PutSymNumber (char *name, dbyte number)
+void PutSymNumber (char *name, lrindex_t number)
 {
     byte *numbptr;                      /*  Pointer to symbol number         */
 
-    numbptr = (byte *) name - sizeof (dbyte);
-    *(numbptr)     = (byte) (number >> 8);
-    *(numbptr + 1) = (byte) (number & 255);
+    numbptr = (byte *) name - sizeof (lrindex_t);
+    memcpy (numbptr, &number, sizeof (number));
 }
 
 
@@ -352,14 +354,14 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
           {
             /*  Decrement usage count and delete node                        */
             PutSymNumber (module-> name,
-                (dbyte) (GetSymNumber (module-> name) - 1));
+                GetSymNumber (module-> name) - 1);
             next = module-> next;
             free (module);
             module = next;
           }
         /*  Decrement usage count and delete node                            */
         PutSymNumber (event-> name,
-            (dbyte) (GetSymNumber (event-> name) - 1));
+            GetSymNumber (event-> name) - 1);
         next = event-> next;
         free (event);
         event = next;
@@ -378,7 +380,7 @@ lrnode *DeleteState (lrnode *listhead, lrnode *state)
               }
       }
     /*  Decrement usage count and delete node                                */
-    PutSymNumber (state-> name, (dbyte) (GetSymNumber (state-> name) - 1));
+    PutSymNumber (state-> name, GetSymNumber (state-> name) - 1);
     free (state);                       /*  Free state node                  */
     return (next);                      /*    and return state sibling       */
 }

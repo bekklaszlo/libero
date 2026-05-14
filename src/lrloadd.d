@@ -6,7 +6,7 @@
 
 /*- Symbolic constants and event numbers ------------------------------------*/
 
-#define _LR_STOP                        0xFFFFL
+#define _LR_STOP                        LR_STOP_INDEX
 #define _LR_NULL_EVENT                  -2
 enum {
     terminate_event = -1,
@@ -41,18 +41,18 @@ enum {
 
 /*- Variables used by dialog interpreter ------------------------------------*/
 
-typedef int event_t;                    /*  Type for dialog entity           */
+typedef int32_t event_t;                /*  Type for dialog entity           */
 typedef void (fsmfunct) (void);         /*  Address of FSM function          */
 
 static event_t
     _LR_event,                          /*  Event for state transition       */
     _LR_state,                          /*  Current dialog state             */
     _LR_savest,                         /*  Saved dialog state               */
-    _LR_index,                          /*  Index into vector table          */
     the_next_event,                     /*  Next event from module           */
     the_exception_event;                /*  Exception event from module      */
 
-static dbyte
+static lrindex_t
+    _LR_index,                          /*  Index into vector table          */
    *_LR_vecptr;                         /*  Pointer into vector table        */
 
 static Bool
@@ -95,7 +95,7 @@ MODULE warning_on_state_name            (void);
 
 /*- Static areas ------------------------------------------------------------*/
 
-static dbyte _LR_nextst [][12] =
+static lrindex_t _LR_nextst [][12] =
 {
     { 0,0,0,0,0,0,0,1,0,0,0,0 },
     { 0,0,0,2,0,0,0,0,0,2,0,0 },
@@ -109,7 +109,7 @@ static dbyte _LR_nextst [][12] =
     { 9,9,9,9,9,9,9,0,9,9,9,9 }
 };
 
-static dbyte _LR_action [][12] =
+static lrindex_t _LR_action [][12] =
 {
     { 0,0,0,0,0,0,0,1,0,0,0,0 },
     { 0,0,0,3,0,0,0,0,0,2,0,0 },
@@ -123,7 +123,7 @@ static dbyte _LR_action [][12] =
     { 22,23,20,20,20,20,24,0,21,20,20,20 }
 };
 
-static dbyte _LR_vector [][6+1] =
+static lrindex_t _LR_vector [][6+1] =
 {
     {0},
     {18,16,17,_LR_STOP},
@@ -180,4 +180,3 @@ static fsmfunct *_LR_module [] =
     terminate_the_program,
     warning_on_state_name
 };
-
