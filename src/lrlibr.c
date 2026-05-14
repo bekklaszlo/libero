@@ -40,7 +40,7 @@ static char
 
 /*-----------------------------.
  |  ValidName                  |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  int ValidName (char *name)                                               |
  |                                                                           |
  |  Description: checks whether name is valid.  Permits only a letter        |
@@ -79,7 +79,7 @@ Bool ValidName (char *name)
 
 /*-----------------------------.
  |  ReservedName               |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  int ReservedName (char *name)                                            |
  |                                                                           |
  |  Description: returns TRUE if name is a known reserved name.  Reserved    |
@@ -100,7 +100,7 @@ Bool ReservedName (char *name)
 
 /*-----------------------------.
  |  TrueName                   |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  char *TrueName (char *name)                                              |
  |                                                                           |
  |  Description: Accepts name in form "some_name_like_this" and returns it   |
@@ -158,9 +158,12 @@ char *TrueName (char *name)
         else
           {
             if (cobol)                  /*  ALL CAPS for cobol               */
-                capital = TRUE;
-
-            formatted [fmtlen++] = (char) (capital? toupper (ch): tolower (ch));
+                formatted [fmtlen++] = (char) toupper (ch);
+            else
+            if (capital)
+                formatted [fmtlen++] = (char) toupper (ch);
+            else
+                formatted [fmtlen++] = ch;
             capital = FALSE;
           }
       }
@@ -171,7 +174,7 @@ char *TrueName (char *name)
 
 /*-----------------------------.
  |  CleanName                  |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  char *CleanName (char *name)                                             |
  |                                                                           |
  |  Description: cleans up name by converting letters to lowercase and '-'   |
@@ -203,7 +206,7 @@ char *CleanName (char *name)
 
 /*-----------------------------.
  |  ExternalName               |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  char *ExternalName (char *name)                                          |
  |                                                                           |
  |  Description: prepares name by converting letters to mixedcase and '_'    |
@@ -241,7 +244,7 @@ char *ExternalName (char *name)
 
 /*-----------------------------.
  |  Check                      |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  void *Check (void *ptr)                                                  |
  |                                                                           |
  |  Description: checks whether ptr was correctly allocated or not.  If ptr  |
@@ -266,7 +269,7 @@ void *Check (void *ptr)
 
 /*-----------------------------.
  |  GetSymNumber               |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  dbyte GetSymNumber (char *name)                                          |
  |                                                                           |
  |  In the Libero state/event/module tables, each name is preceded in        |
@@ -285,7 +288,7 @@ dbyte GetSymNumber (char *name)
 
 /*-----------------------------.
  |  PutSymNumber               |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  void PutSymNumber (char *name, dbyte number)                             |
  |                                                                           |
  |  In the Libero state/event/module tables, each name is preceded in        |
@@ -305,7 +308,7 @@ void PutSymNumber (char *name, dbyte number)
 
 /*-----------------------------.
  |  NamedState                 |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  lrnode *NamedState (lrnode *listhead, char *name)                        |
  |                                                                           |
  |  Looks through the specified list for a state with the specified name.    |
@@ -327,7 +330,7 @@ lrnode *NamedState (lrnode *listhead, char *name)
 
 /*-----------------------------.
  |  DeleteState                |
- |-----------------------------`---------------------------------------------.
+ |-----------------------------`---------------------------------------------. 
  |  lrnode *DeleteState (lrnode listhead, lrnode *state)                     |
  |                                                                           |
  |  Deletes the specified state, keeping the dialog links correct.  Returns  |
