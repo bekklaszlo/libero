@@ -467,7 +467,7 @@ static lrnode *alloc_node (char type, lrnode *parent, lrnode *sibling)
     newnode-> next  = NULL;
     newnode-> type  = type;             /*  Set node type                    */
     strcpy (canonical_token, token);
-    newnode-> source_name = StrDup (token);
+    newnode-> source_name = (char *) Check (StrDup (token));
     newnode-> name  = resolve_symbol (CleanName (canonical_token), type);
 
     if (sibling)                        /*  Attach to parent or sibling      */
@@ -860,7 +860,8 @@ duplicate_event (lrnode *state, lrnode *event, char *name)
 
     /*  Create event node                                                    */
     source_name = OriginalName (listhead, 'e', name);
-    strcpy (token, source_name);
+    strncpy (token, source_name, LINE_MAX);
+    token [LINE_MAX] = 0;
     new_event = alloc_node ('e', state, old_event);
 
     /*  Copy event child nodes                                               */
