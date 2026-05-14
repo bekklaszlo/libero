@@ -860,8 +860,8 @@ duplicate_event (lrnode *state, lrnode *event, char *name)
 
     /*  Create event node                                                    */
     source_name = OriginalName (listhead, 'e', name);
-    strncpy (token, source_name, LINE_MAX);
-    token [LINE_MAX] = 0;
+    strncpy (token, source_name, sizeof (token) - 1);
+    token [sizeof (token) - 1] = 0;
     new_event = alloc_node ('e', state, old_event);
 
     /*  Copy event child nodes                                               */
