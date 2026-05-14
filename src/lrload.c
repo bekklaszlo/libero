@@ -132,7 +132,6 @@ static void    init_charmaps      (void);
 static void    build_charmap      (byte flag, char *chars);
 static lrnode *alloc_node         (char type, lrnode *parent, lrnode *sibling);
 static char   *resolve_symbol     (char *name, char type);
-static char   *lookup_source_name (char type, char *name);
 static void    syntax_error       (int exception, int msgid, ...);
 static void    resolve_superstate (SS_REF *refnode);
 static void    inherit_events     (lrnode *state, lrnode *super_state);
@@ -542,33 +541,6 @@ static char *resolve_symbol (char *name, char type)
 }
 
 
-static char *lookup_source_name (char type, char *name)
-{
-    lrnode *state,
-           *event,
-           *module;
-
-    for (state = listhead-> child; state; state = state-> next)
-      {
-        if (type == 's' && streq (state-> name, name))
-            return (state-> source_name);
-
-        for (event = state-> child; event; event = event-> next)
-          {
-            if (type == 'e' && streq (event-> name, name))
-                return (event-> source_name);
-
-            if (event-> child == NULL)
-                continue;
-            for (module = event-> child-> next; module; module = module-> next)
-                if (type == 'm' && streq (module-> name, name))
-                    return (module-> source_name);
-          }
-      }
-    return (NULL);
-}
-
-
 /*************************   ATTACH USES SUPERSTATE   ************************/
 
 MODULE attach_uses_superstate (void)
@@ -887,8 +859,8 @@ duplicate_event (lrnode *state, lrnode *event, char *name)
     for (old_event = event; old_event-> next; old_event = old_event-> next);
 
     /*  Create event node                                                    */
-    source_name = lookup_source_name ('e', name);
-    strcpy (token, source_name? source_name: name);
+    source_name = OriginalName (listhead, 'e', name);
+    strcpy (token, source_name);
     new_event = alloc_node ('e', state, old_event);
 
     /*  Copy event child nodes                                               */

@@ -195,6 +195,7 @@ Bool    ReservedName        (char *name);
 char   *TrueName            (char *name);
 char   *CleanName           (char *name);
 char   *ExternalName        (char *name);
+char   *OriginalName        (lrnode *listhead, char type, char *name);
 void   *Check               (void *ptr);
 lrindex_t GetSymNumber      (char *name);
 void      PutSymNumber      (char *name, lrindex_t number);

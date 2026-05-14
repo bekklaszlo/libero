@@ -249,7 +249,6 @@ static int     eval_condition          (char *line);
 static void    store_var_value         (symbol *var_sym, char *var_value);
 static void    check_option_value      (symbol *var_sym);
 static void    check_name_length       (char *name, char *type);
-static char   *original_node_name      (char type, char *name);
 static FILE   *open_extend             (char *filename);
 static void    write_output_line       (char *line);
 static void    clear_row_parts         (void);
@@ -2239,8 +2238,8 @@ handler_for_do_state (void)
     if (state_nbr < stats-> states)
       {
         strcpy (do_block.name_symbol,
-                TrueName (original_node_name ('s',
-                                              stats-> snames [state_nbr])));
+                TrueName (OriginalName (
+                    listhead, 's', stats-> snames [state_nbr])));
         strcpy (do_block.comma_symbol,
                (state_nbr < stats-> states - 1? std_comma_before-> svalue:
                                                 std_comma_last-> svalue));
@@ -2297,7 +2296,7 @@ handler_for_do_event (void)
             event_nbr      = do_loop_event-> number;
             the_next_event = ok_event;
             sym_values (std_next_state, 0,
-                TrueName (original_node_name (
+                TrueName (OriginalName (listhead,
                     's', stats-> snames [do_loop_event-> child-> number])));
             do_loop_module = do_loop_event-> child-> next;
           }
@@ -2312,7 +2311,7 @@ handler_for_do_event (void)
     if (the_next_event == ok_event)
       {
         strcpy (do_block.name_symbol,
-                original_node_name ('e', stats-> enames [event_nbr]));
+                OriginalName (listhead, 'e', stats-> enames [event_nbr]));
         strcat (do_block.name_symbol, "_event");
         strcpy (do_block.name_symbol, TrueName (do_block.name_symbol));
         strcpy (do_block.comma_symbol,
@@ -2331,35 +2330,6 @@ check_name_length (char *name, char *type)
         PrintMessage (MSG_NAME_TOO_LONG, type, name);
         raise_exception (error_event);
       }
-}
-
-
-static char *
-original_node_name (char type, char *name)
-{
-    lrnode
-        *state,
-        *event,
-        *module;
-
-    for (state = listhead-> child; state; state = state-> next)
-      {
-        if (type == 's' && streq (state-> name, name))
-            return (state-> source_name);
-
-        for (event = state-> child; event; event = event-> next)
-          {
-            if (type == 'e' && streq (event-> name, name))
-                return (event-> source_name);
-
-            if (event-> child == NULL)
-                continue;
-            for (module = event-> child-> next; module; module = module-> next)
-                if (type == 'm' && streq (module-> name, name))
-                    return (module-> source_name);
-          }
-      }
-    return (name);
 }
 
 
@@ -2421,7 +2391,7 @@ handler_for_do_module (void)
     if (the_next_event == ok_event)
       {
         strcpy (do_block.name_symbol, TrueName (
-                original_node_name ('m', stats-> mnames [module_nbr])));
+                OriginalName (listhead, 'm', stats-> mnames [module_nbr])));
         strcpy (do_block.comma_symbol,
               (module_nbr < stats-> modules - 1? std_comma_before-> svalue:
                                                  std_comma_last-> svalue));
@@ -2861,8 +2831,9 @@ handler_for_do_stubs (void)
 
                     for (modnbr = 0; modnbr < stats-> modules; modnbr++)
                         if (streq (token, TrueName (
-                                        original_node_name (
-                                            'm', stats-> mnames [modnbr])))
+                                        OriginalName (
+                                            listhead, 'm',
+                                            stats-> mnames [modnbr])))
                         &&  flags [modnbr] == 0)
                           {
                             flags [modnbr] = 1;
@@ -2922,8 +2893,8 @@ handler_for_do_stubs (void)
           {
             if (flags [modnbr] == 0)
               {
-                build_stub_header (original_node_name (
-                                   'm', stats-> mnames [modnbr]));
+                build_stub_header (OriginalName (
+                                   listhead, 'm', stats-> mnames [modnbr]));
                 module_done = TRUE;
               }
             modnbr++;
