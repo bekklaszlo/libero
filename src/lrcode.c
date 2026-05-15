@@ -223,6 +223,7 @@ static void    refresh_symbol_pointers (void);
 static void    init_do_block_values    (DO_BLOCK *do_block);
 static void    init_do_block_symbols   (void);
 static void    init_if_block_values    (IF_BLOCK *do_block);
+static Bool    read_schema_line        (FILE *stream, char *string);
 static void    init_charmaps           (void);
 static void    build_charmap           (byte flag, char *chars);
 static void    init_vectors            (void);
@@ -602,6 +603,48 @@ init_if_block_values (IF_BLOCK *block)
 
 
 /*  -------------------------------------------------------------------------
+ *  read_schema_line
+ *
+ *  Reads a schema/source line for code generation without expanding tabs.
+ *  Legacy schemas can depend on literal tab-indented marker lines for exact
+ *  :include matching, so these bytes must be preserved.
+ */
+
+static Bool
+read_schema_line (FILE *stream, char *string)
+{
+    int
+        ch,                             /*  Character read from file         */
+        cnbr;                           /*  Index into returned string       */
+
+    cnbr = 0;                           /*  Start at the beginning           */
+    FOREVER
+      {
+        ch = fgetc (stream);            /*  Get next character from file     */
+        if (ch == '\r')                 /*  Found carriage-return            */
+            FileCrLf = TRUE;            /*    Set flag and ignore CR         */
+        else
+        if ((ch == '\n')                /*  Have end of line                 */
+        ||  (ch == EOF)                 /*    or end of file                 */
+        ||  (ch == 26))                 /*    or MS-DOS Ctrl-Z               */
+          {
+            string [cnbr] = '\0';       /*  Terminate string                 */
+            return (ch == '\n' || cnbr);/*  and return TRUE/FALSE            */
+          }
+        else
+        if (cnbr < LINE_MAX)
+            string [cnbr++] = (char) ch;/*  Else add char to string          */
+
+        if (cnbr >= LINE_MAX)           /*  Return in any case if line is    */
+          {                             /*    too long - the line will be    */
+            string [LINE_MAX] = '\0';   /*    cut into pieces                */
+            return (TRUE);
+          }
+      }
+}
+
+
+/*  -------------------------------------------------------------------------
  *  init_charmaps
  *
  *  Initialise character map bit tables.  These are used to speed-up
@@ -796,7 +839,7 @@ parse_schema_line (void)
     event_t
         line_event;                     /*  Returned event for line          */
 
-    if (FileRead (schema, curline) == FALSE)
+    if (read_schema_line (schema, curline) == FALSE)
         line_event = finished_event;
     else
       {
@@ -1005,7 +1048,8 @@ get_next_token (int type, int convert)
 static void
 skip_spaces (void)
 {
-    while (curline [char_nbr] == ' ')
+    while (curline [char_nbr] == ' '
+    ||   curline [char_nbr] == '\t')
         char_nbr++;
 }
 
@@ -1642,7 +1686,7 @@ MODULE include_specified_file (void)
             syntax_error (0, MSG_OUTPUT_IGNORED);
         else
           {
-            while (FileRead (include_file, curline))
+            while (read_schema_line (include_file, curline))
               {
                 preformat_line_if_reqd (curline);
                 StrCrop (curline);
@@ -2812,7 +2856,7 @@ handler_for_do_stubs (void)
                 syntax_error (error_event, MSG_SOURCE_FILE_NF, token);
                 return;
               }
-            while (FileRead (input, srcline))
+            while (read_schema_line (input, srcline))
               {
                 preformat_line_if_reqd (srcline);
                 StrCrop (srcline);
